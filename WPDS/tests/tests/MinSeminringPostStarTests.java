@@ -128,8 +128,7 @@ public class MinSeminringPostStarTests {
             return s("EPS");
           }
         };
-    aut.addTransition(t(a, c, ACC));
-    aut.addWeightForTransition(t(a, c, ACC), weight);
+    aut.addTransitionWithWeight(t(a, c, ACC), weight);
     return aut;
   }
 

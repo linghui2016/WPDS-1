@@ -8,6 +8,7 @@ public class Transition<N extends Location, D extends State> implements Edge<D, 
   private D s1;
   private N l1;
   private D s2;
+  private boolean modified;
 
   public Transition(D s1, N l1, D s2) {
     assert s1 != null;
@@ -79,5 +80,9 @@ public class Transition<N extends Location, D extends State> implements Edge<D, 
   @Override
   public N getLabel() {
     return l1;
+  }
+
+  public boolean isModified() {
+    return modified;
   }
 }

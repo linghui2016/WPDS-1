@@ -3,13 +3,13 @@ package wpds.impl;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
 import wpds.interfaces.IPushdownSystem;
 import wpds.interfaces.Location;
 import wpds.interfaces.State;
 import wpds.wildcard.Wildcard;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 public class PreStar<N extends Location, D extends State, W extends Weight<N>> {
   private LinkedList<Transition<N, D>> worklist = Lists.newLinkedList();
@@ -22,11 +22,6 @@ public class PreStar<N extends Location, D extends State, W extends Weight<N>> {
     worklist = Lists.newLinkedList(initialAutomaton.getTransitions());
     fa = initialAutomaton;
 
-    for (Transition<N, D> trans : Sets.newHashSet(fa.getTransitions())) {
-      W one = pds.getOne();
-      one.setRange(trans.getLabel(), trans.getLabel());
-      fa.addWeightForTransition(trans, one);
-    }
     for (PopRule<N, D, W> r : pds.getPopRules()) {
       update(new Transition<N, D>(r.getS1(), r.getL1(), r.getS2()), r.getWeight(),
           Lists.<Transition<N, D>>newLinkedList());
@@ -34,7 +29,7 @@ public class PreStar<N extends Location, D extends State, W extends Weight<N>> {
 
     while (!worklist.isEmpty()) {
       Transition<N, D> t = worklist.removeFirst();
-
+      System.out.println(t);
       for (NormalRule<N, D, W> r : pds.getNormalRulesEnding(t.getStart(), t.getLabel())) {
         // Normal rules
           LinkedList<Transition<N, D>> previous = Lists.<Transition<N, D>>newLinkedList();
@@ -85,17 +80,11 @@ public class PreStar<N extends Location, D extends State, W extends Weight<N>> {
   private void update(Transition<N, D> trans, W weight, List<Transition<N, D>> previous) {
     if (trans.getLabel() instanceof Wildcard)
       throw new RuntimeException("INVALID TRANSITION");
-    fa.addTransition(trans);
-    W lt = getOrCreateWeight(trans);
-    W fr = weight;
-    for (Transition<N, D> prev : previous) {
-      fr = (W) fr.extendWithIn(getOrCreateWeight(prev));
+    for (Transition<N, D> t : previous) {
+      weight = (W) weight.extendWith(getOrCreateWeight(t));
     }
-    W newLt = (W) lt.combineWithIn(fr);
-    fa.addWeightForTransition(trans, newLt);
-    if (!lt.equals(newLt)) {
-      worklist.add(trans);
-    }
+    System.out.println(trans + "\t as of \t and " + weight);
+    worklist.addAll(fa.addTransitionWithWeight(trans, weight));
   }
 
   private W getOrCreateWeight(Transition<N, D> trans) {
@@ -103,7 +92,7 @@ public class PreStar<N extends Location, D extends State, W extends Weight<N>> {
     if (w != null)
       return w;
 
-    W z = pds.getZero();
+    W z = pds.getOne();
     z.setRange(trans.getLabel(), trans.getLabel());
     return z;
   }

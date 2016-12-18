@@ -43,9 +43,9 @@ public class WPDSPostStarTests {
     WeightedPAutomaton<StackSymbol, Abstraction, NumWeight<StackSymbol>> fa =
         waccepts(1, "a", w(0));
     pds.poststar(fa);
-    assertEquals(fa.getTransitions().size(), 3);
-    assertEquals(fa.getStates().size(), 4);
-    assertEquals(fa.getWeightFor(t(3, "c", ACC)), w(5));
+    assertEquals(3, fa.getTransitions().size());
+    assertEquals(4, fa.getStates().size());
+    assertEquals(w(5), fa.getWeightFor(t(3, "c", ACC)));
   }
 
   @Test
@@ -72,8 +72,7 @@ public class WPDSPostStarTests {
         waccepts(1, "a", w(0));
     pds.poststar(fa);
     assertEquals(fa.getWeightFor(t(1, "b", ACC)), w(2));
-    assertEquals(fa.getWeightFor(t(1, "c", a(1, "c"))), w(5));
-    assertEquals(fa.getWeightFor(t(1, "e", a(1, "c"))), w(6));
+    assertEquals(fa.getWeightFor(t(1, "e", a(1, "c"))), w(1));
   }
 
   @Test
@@ -85,8 +84,7 @@ public class WPDSPostStarTests {
     WeightedPAutomaton<StackSymbol, Abstraction, NumWeight<StackSymbol>> fa =
         waccepts(1, "a", w(0));
     pds.poststar(fa);
-    assertEquals(fa.getWeightFor(t(5, "d", ACC)), w(11));
-    assertEquals(fa.getWeightFor(t(4, "e", a(3, "c"))), w(6));
+    assertEquals(w(11), fa.getWeightFor(t(5, "d", ACC)));
   }
 
   @Test
@@ -95,15 +93,13 @@ public class WPDSPostStarTests {
     pds.addRule(wpush(1, "b", 2, "call", "d", w(2)));
     pds.addRule(wnormal(2, "call", 2, "e", w(3)));
     pds.addRule(wpop(2, "e", 3, w(4)));
-    pds.addRule(wnormal(3, "d", 1, "f", w(5)));
+    pds.addRule(wnormal(3, "d", 3, "f", w(5)));
     pds.addRule(wpush(3, "f", 2, "call", "g", w(6)));
     pds.addRule(wnormal(3, "g", 4, "h", w(7)));
     WeightedPAutomaton<StackSymbol, Abstraction, NumWeight<StackSymbol>> fa =
         waccepts(1, "a", w(0));
     pds.poststar(fa);
-    System.out.println(fa);
-    assertEquals(w(35), fa.getWeightFor(t(1, "h", ACC)));
-    assertEquals(w(6), fa.getWeightFor(t(4, "e", a(3, "c"))));
+    assertEquals(w(35), fa.getWeightFor(t(4, "h", ACC)));
   }
 
   @Test
@@ -112,15 +108,14 @@ public class WPDSPostStarTests {
     pds.addRule(wpush(1, "b", 2, "call", "d", w(0)));
     pds.addRule(wnormal(2, "call", 2, "e", w(0)));
     pds.addRule(wpop(2, "e", 3, w(4)));
-    pds.addRule(wnormal(3, "d", 1, "f", w(0)));
+    pds.addRule(wnormal(3, "d", 3, "f", w(0)));
     pds.addRule(wpush(3, "f", 2, "call", "g", w(0)));
     pds.addRule(wnormal(3, "g", 4, "h", w(0)));
     WeightedPAutomaton<StackSymbol, Abstraction, NumWeight<StackSymbol>> fa =
         waccepts(1, "a", w(0));
     pds.poststar(fa);
     System.out.println(fa);
-    assertEquals(w(35), fa.getWeightFor(t(1, "h", ACC)));
-    assertEquals(w(6), fa.getWeightFor(t(4, "e", a(3, "c"))));
+    assertEquals(w(8), fa.getWeightFor(t(4, "h", ACC)));
   }
 
 

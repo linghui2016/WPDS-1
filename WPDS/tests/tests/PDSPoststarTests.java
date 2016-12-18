@@ -38,6 +38,7 @@ public class PDSPoststarTests {
     PAutomaton<StackSymbol, Abstraction> fa = accepts(1, "a");
     pds.poststar(fa);
     System.out.println(fa);
+    System.out.println(fa.getTransitions());
     assertTrue(fa.getTransitions().contains(t(1, "d", ACC)));
   }
 

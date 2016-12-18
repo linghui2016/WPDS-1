@@ -8,6 +8,7 @@ import wpds.impl.Transition;
 import wpds.impl.UNormalRule;
 import wpds.impl.UPopRule;
 import wpds.impl.UPushRule;
+import wpds.impl.Weight;
 import wpds.impl.WeightedPAutomaton;
 import wpds.interfaces.Location;
 import wpds.interfaces.State;
@@ -28,7 +29,7 @@ public class TestHelper {
         return s("EPS");
       }
     };
-    aut.addTransition(t(a, c, ACC));
+    aut.addTransitionWithWeight(t(a, c, ACC), Weight.NO_WEIGHT);
     return aut;
   }
 
@@ -48,8 +49,7 @@ public class TestHelper {
         return s("EPS");
       }
     };
-    aut.addTransition(t(a, c, ACC));
-    aut.addWeightForTransition(t(a, c, ACC), weight);
+    aut.addTransitionWithWeight(t(a, c, ACC), weight);
     return aut;
   }
 

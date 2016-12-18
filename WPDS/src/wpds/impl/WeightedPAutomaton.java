@@ -4,15 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-
-import com.google.common.base.Joiner;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
-import com.google.common.collect.Table;
 
 import pathexpression.Edge;
 import pathexpression.IRegEx;
@@ -20,6 +12,11 @@ import pathexpression.LabeledGraph;
 import pathexpression.PathExpressionComputer;
 import wpds.interfaces.Location;
 import wpds.interfaces.State;
+
+import com.google.common.base.Joiner;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 
 public abstract class WeightedPAutomaton<N extends Location, D extends State, W extends Weight<N>>
     implements LabeledGraph<D, N> {
@@ -40,11 +37,6 @@ public abstract class WeightedPAutomaton<N extends Location, D extends State, W 
     this.finalState = finalState;
   }
 
-  private void initTransitions() {
-    for (Transition<N, D> trans : transitions) {
-      addTransition(trans);
-    }
-  }
 
   public abstract D createState(D d, N loc);
 
@@ -53,21 +45,63 @@ public abstract class WeightedPAutomaton<N extends Location, D extends State, W 
     return Sets.newHashSet(transitions);
   }
 
-  public Collection<Transition<N, D>> getTransitionsOutOf(D state) {
-    return transitionsOutOf.get(state);
+  public Collection<Transition<N, D>> getTransitionsOutOfEps(D state) {
+    return Sets.newHashSet(transitionsOutOf.get(state));
   }
 
-  public Collection<Transition<N, D>> getTransitionsInto(D state) {
-    return new HashSet<>(transitionsInto.get(state));
+  public Collection<Transition<N, D>> getTrasitionsIntoEps(D state) {
+    return Sets.newHashSet(transitionsInto.get(state));
   }
 
-  public boolean addTransition(Transition<N, D> trans) {
-    transitionsOutOf.get(trans.getStart()).add(trans);
-    transitionsInto.get(trans.getTarget()).add(trans);
-    states.add(trans.getTarget());
-    states.add(trans.getStart());
-    return transitions.add(trans);
+  private boolean updateWeightFor(Transition<N, D> trans, W weight) {
+    W oldWeight = getWeightFor(trans);
+    W newWeight = null;
+    if (oldWeight == null) {
+      newWeight = weight;
+    } else {
+      newWeight = (W) oldWeight.combineWith(weight);
+    }
+    transitionToWeights.put(trans, newWeight);
+    return !newWeight.equals(oldWeight);
   }
+
+  public Collection<Transition<N, D>> addTransitionWithWeight(Transition<N, D> trans, W weight) {
+    D from = trans.getStart();
+    D to = trans.getTarget();
+    states.add(from);
+    states.add(to);
+    transitions.add(trans);
+    System.out.println(trans);
+    System.out.println(weight);
+    Set<Transition<N, D>> changed = new HashSet<>();
+    if (updateWeightFor(trans, weight))
+      changed.add(trans);
+    if (trans.getLabel().equals(epsilon())) {
+
+      Collection<Transition<N, D>> outGoing = transitionsOutOf.get(to);
+      for (Transition<N, D> t : outGoing) {
+        Transition<N, D> newTrans = new Transition<N, D>(from, t.getLabel(), t.getTarget());
+        transitionsOutOf.get(from).add(newTrans);
+        transitions.add(newTrans);
+
+        if (updateWeightFor(newTrans, (W) weight.extendWith(getWeightFor(t))))
+          changed.add(newTrans);
+      }
+      Collection<Transition<N, D>> into = transitionsInto.get(from);
+      for (Transition<N, D> t : into) {
+        Transition<N, D> newTrans = new Transition<N, D>(t.getStart(), t.getLabel(), to);
+        transitionsInto.get(to).add(newTrans);
+        transitions.add(newTrans);
+        if (updateWeightFor(newTrans, (W) weight.extendWith(getWeightFor(t))))
+          changed.add(newTrans);
+      }
+    } else {
+      transitionsOutOf.get(from).add(trans);
+      transitionsInto.get(to).add(trans);
+    }
+    return changed;
+  }
+
 
 
 
@@ -114,9 +148,6 @@ public abstract class WeightedPAutomaton<N extends Location, D extends State, W 
   };
 
 
-  public void addWeightForTransition(Transition<N, D> trans, W weight) {
-    transitionToWeights.put(trans, weight);
-  }
 
   public W getWeightFor(Transition<N, D> trans) {
     return transitionToWeights.get(trans);
