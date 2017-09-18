@@ -56,7 +56,7 @@ import wpds.interfaces.State;
 import wpds.interfaces.WPAUpdateListener;
 
 public abstract class Boomerang {
-	public static final boolean DEBUG = true;
+	public static final boolean DEBUG = false;
 	private static final boolean DISABLE_CALLPOI = false;
 	Map<Entry<INode<Node<Statement,Val>>, Field>, INode<Node<Statement,Val>>> genField = new HashMap<>();
 	private final DefaultValueMap<Query, AbstractBoomerangSolver> queryToSolvers = new DefaultValueMap<Query, AbstractBoomerangSolver>() {
@@ -510,19 +510,19 @@ public abstract class Boomerang {
 			if(byPassingAllocation.equals(flowSource)){
 				return;
 			}
-			AbstractBoomerangSolver byPassingSolver = queryToSolvers.get(byPassingAllocation);
-			WeightedPAutomaton<Field, INode<Node<Statement, Val>>, Weight<Field>> byPassingFieldAutomaton = byPassingSolver.getFieldAutomaton();
-			Node<Statement,Val> source = new Node<Statement,Val>(returnSite,byPassing);
+//			AbstractBoomerangSolver byPassingSolver = queryToSolvers.get(byPassingAllocation);
+//			WeightedPAutomaton<Field, INode<Node<Statement, Val>>, Weight<Field>> byPassingFieldAutomaton = byPassingSolver.getFieldAutomaton();
+//			Node<Statement,Val> source = new Node<Statement,Val>(returnSite,byPassing);
 			final AbstractBoomerangSolver flowSolver = queryToSolvers.getOrCreate(flowSource);
-			byPassingFieldAutomaton.registerListener(new ForwardDFSVisitor<Field, INode<Node<Statement,Val>>, Weight<Field>>(byPassingFieldAutomaton,new SingleNode<Node<Statement,Val>>(source), new ReachabilityListener<Field, INode<Node<Statement,Val>>>() {
-				@Override
-				public void reachable(Transition<Field, INode<Node<Statement, Val>>> transition) {
-					flowSolver.getFieldAutomaton().addTransition(transition);
-				}
-			}));
+//			byPassingFieldAutomaton.registerListener(new ForwardDFSVisitor<Field, INode<Node<Statement,Val>>, Weight<Field>>(byPassingFieldAutomaton,new SingleNode<Node<Statement,Val>>(source), new ReachabilityListener<Field, INode<Node<Statement,Val>>>() {
+//				@Override
+//				public void reachable(Transition<Field, INode<Node<Statement, Val>>> transition) {
+//					flowSolver.getFieldAutomaton().addTransition(transition);
+//				}
+//			}));
 
 			flowSolver.setFieldContextReachable(new Node<Statement,Val>(returnSite,byPassing));
-			if(!byPassing.equals(returnedVal.fact()))
+//			if(!byPassing.equals(returnedVal.fact()))
 				flowSolver.addNormalCallFlow(returnedVal,  new Node<Statement,Val>(returnSite,byPassing));
 		}
 		@Override
@@ -586,19 +586,11 @@ public abstract class Boomerang {
 	
 					@Override
 					public void onAddedTransition(Transition<Field, INode<Node<Statement, Val>>> t) {
+						flowSolver.getFieldAutomaton().addTransition(t);
 						final INode<Node<Statement, Val>> aliasedVariableAtStmt = t.getStart();
 						if(aliasedVariableAtStmt.fact().stmt().equals(succOfWrite) && !(aliasedVariableAtStmt instanceof GeneratedState)){
 							if(!aliases.put(flowAllocation, aliasedVariableAtStmt.fact().fact()))
 								return;
-							final WeightedPAutomaton<Field, INode<Node<Statement, Val>>, Weight<Field>> aut = baseSolver.getFieldAutomaton();
-							aut.registerListener(new ForwardDFSVisitor<Field, INode<Node<Statement,Val>>, Weight<Field>>(aut, aliasedVariableAtStmt, new ReachabilityListener<Field, INode<Node<Statement,Val>>>() {
-							
-								@Override
-								public void reachable(Transition<Field, INode<Node<Statement,Val>>> transition) {
-									if(!aliasedVariableAtStmt.fact().fact().equals(getBaseVar()) && !aliasedVariableAtStmt.fact().fact().equals(getStoredVar()))
-										flowSolver.getFieldAutomaton().addTransition(transition);
-								}
-							}));
 							flowSolver.getFieldAutomaton().addTransition(new Transition<Field, INode<Node<Statement,Val>>>(new AllocNode<Node<Statement,Val>>(baseAllocation.asNode()), Field.epsilon(), new SingleNode<Node<Statement,Val>>(new Node<Statement,Val>(succOfWrite,getBaseVar()))));
 							if(!aliasedVariableAtStmt.fact().fact().equals(getBaseVar()) && !aliasedVariableAtStmt.fact().fact().equals(getStoredVar()))
 								flowSolver.handlePOI(FieldStmtPOI.this, aliasedVariableAtStmt.fact());
