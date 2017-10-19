@@ -138,7 +138,7 @@ public class TestHelper {
 
 
 
-  static class Abstraction implements State {
+  static class Abstraction extends State {
     final int a;
     final StackSymbol s;
 

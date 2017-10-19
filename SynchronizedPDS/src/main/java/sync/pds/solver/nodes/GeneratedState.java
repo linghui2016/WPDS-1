@@ -1,7 +1,7 @@
 package sync.pds.solver.nodes;
 
 
-public class GeneratedState<L,N> implements INode<L>{
+public class GeneratedState<L,N> extends INode<L>{
 	
 	private INode<L> node;
 	private N loc;

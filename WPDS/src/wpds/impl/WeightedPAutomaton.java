@@ -39,8 +39,6 @@ public abstract class WeightedPAutomaton<N extends Location, D extends State, W 
 	// set P in paper [Reps2003]
 	protected D initialState;
 	protected Set<D> states = Sets.newHashSet();
-	private final Multimap<D, Transition<N, D>> transitionsOutOf = HashMultimap.create();
-	private final Multimap<D, Transition<N, D>> transitionsInto = HashMultimap.create();
 	private Set<WPAUpdateListener<N, D, W>> listeners = Sets.newHashSet();
 	private Multimap<D, WPAStateListener<N, D, W>> stateListeners = HashMultimap.create();
 	private Map<D, ForwardDFSVisitor<N, D, W>> stateToDFS = Maps.newHashMap();
@@ -104,22 +102,22 @@ public abstract class WeightedPAutomaton<N extends Location, D extends State, W 
 
 	public String toDotString() {
 		String s = "digraph {\n";
-		for (D source : states) {
-			Collection<Transition<N, D>> collection = transitionsOutOf.get(source);
-			for (D target : states) {
-				List<String> labels = Lists.newLinkedList();
-				for (Transition<N, D> t : collection) {
-					if (t.getTarget().equals(target)) {
-						labels.add(t.getString().toString()+ " W: "+ transitionToWeights.get(t));
-					}
-				}
-				if (!labels.isEmpty()) {
-					s += "\t\"" + wrapIfInitialOrFinalState(source) + "\"";
-					s += " -> \"" + wrapIfInitialOrFinalState(target) + "\"";
-					s += "[label=\"" + Joiner.on(",").join(labels) + "\"];\n";
-				}
-			}
-		}
+//		for (D source : states) {
+//			Collection<Transition<N, D>> collection = transitionsOutOf.get(source);
+//			for (D target : states) {
+//				List<String> labels = Lists.newLinkedList();
+//				for (Transition<N, D> t : collection) {
+//					if (t.getTarget().equals(target)) {
+//						labels.add(t.getString().toString()+ " W: "+ transitionToWeights.get(t));
+//					}
+//				}
+//				if (!labels.isEmpty()) {
+//					s += "\t\"" + wrapIfInitialOrFinalState(source) + "\"";
+//					s += " -> \"" + wrapIfInitialOrFinalState(target) + "\"";
+//					s += "[label=\"" + Joiner.on(",").join(labels) + "\"];\n";
+//				}
+//			}
+//		}
 		s += "}\n";
 		s += "Transitions: " + transitions.size() +"\n";
 		// s += "Initial State:" + initialState + "\n";
@@ -187,8 +185,6 @@ public abstract class WeightedPAutomaton<N extends Location, D extends State, W 
 			failedAdditions++;
 			return false;
 		}
-		transitionsOutOf.get(trans.getStart()).add(trans);
-		transitionsInto.get(trans.getTarget()).add(trans);
 		states.add(trans.getTarget());
 		states.add(trans.getStart());
 		boolean added = transitions.add(trans);
@@ -196,6 +192,8 @@ public abstract class WeightedPAutomaton<N extends Location, D extends State, W 
 		W newWeight = (W) (oldWeight == null ? weight : oldWeight.combineWith(weight));
 		if (!newWeight.equals(oldWeight)) {
 			transitionToWeights.put(trans, newWeight);
+			trans.getStart().addOutTransition(trans, newWeight);
+			trans.getTarget().addInTransition(trans,newWeight);
 			for (WPAUpdateListener<N, D, W> l : Lists.newArrayList(listeners)) {
 				l.onWeightAdded(trans, newWeight);
 			}
@@ -228,15 +226,16 @@ public abstract class WeightedPAutomaton<N extends Location, D extends State, W 
 	}
 
 	public void registerListener(WPAStateListener<N, D, W> l) {
-		if (!stateListeners.put(l.getState(), l)) {
-			return;
-		}
-		for (Transition<N, D> t : Lists.newArrayList(transitionsOutOf.get(l.getState()))) {
-			l.onOutTransitionAdded(t,transitionToWeights.get(t));
-		}
-		for (Transition<N, D> t : Lists.newArrayList(transitionsInto.get(l.getState()))) {
-			l.onInTransitionAdded(t,transitionToWeights.get(t));
-		}
+		l.getState().registerListener(l);
+//		if (!stateListeners.put(l.getState(), l)) {
+//			return;
+//		}
+//		for (Transition<N, D> t : Lists.newArrayList(transitionsOutOf.get(l.getState()))) {
+//			l.onOutTransitionAdded(t,transitionToWeights.get(t));
+//		}
+//		for (Transition<N, D> t : Lists.newArrayList(transitionsInto.get(l.getState()))) {
+//			l.onInTransitionAdded(t,transitionToWeights.get(t));
+//		}
 
 		for(WeightedPAutomaton<N, D, W> nested : Lists.newArrayList(nestedAutomatons)){
 			nested.registerListener(l);

@@ -1,6 +1,6 @@
 package sync.pds.solver.nodes;
 
-public class NodeWithLocation<Stmt, Fact, Location> implements INode<Node<Stmt,Fact>>{
+public class NodeWithLocation<Stmt, Fact, Location> extends INode<Node<Stmt,Fact>>{
 
 	private Location loc;
 	private Node<Stmt, Fact> fact;

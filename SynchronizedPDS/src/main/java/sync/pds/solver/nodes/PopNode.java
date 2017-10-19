@@ -3,7 +3,7 @@ package sync.pds.solver.nodes;
 import sync.pds.solver.SyncPDSSolver.PDSSystem;
 import wpds.interfaces.State;
 
-public class PopNode<Location> implements State{
+public class PopNode<Location> extends State{
 
 	private PDSSystem system;
 	private Location location;

@@ -2,7 +2,7 @@ package sync.pds.solver.nodes;
 
 import wpds.interfaces.State;
 
-public class Node<Stmt, Fact> implements State{
+public class Node<Stmt, Fact> extends State{
 
 	final protected Stmt stmt;
 	final protected Fact variable;

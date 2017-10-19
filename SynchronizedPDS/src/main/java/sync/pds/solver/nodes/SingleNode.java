@@ -1,7 +1,7 @@
 package sync.pds.solver.nodes;
 
 
-public class SingleNode<Fact> implements INode<Fact>{
+public class SingleNode<Fact> extends INode<Fact>{
 	private Fact fact;
 
 	public SingleNode(Fact fact){
