@@ -62,7 +62,7 @@ import wpds.interfaces.WPAStateListener;
 import wpds.interfaces.WPAUpdateListener;
 
 public abstract class WeightedBoomerang<W extends Weight> implements MethodReachableQueue {
-	public static final boolean DEBUG = true;
+	public static final boolean DEBUG = false;
 	private Map<Entry<INode<Node<Statement, Val>>, Field>, INode<Node<Statement, Val>>> genField = new HashMap<>();
 	private long lastTick;
 	private final DefaultValueMap<Query, AbstractBoomerangSolver<W>> queryToSolvers = new DefaultValueMap<Query, AbstractBoomerangSolver<W>>() {
@@ -935,6 +935,7 @@ public abstract class WeightedBoomerang<W extends Weight> implements MethodReach
 		}
 
 	}
+
 	private class ImportFlowAtReturn extends StatementBasedFieldTransitionListener<W> {
 		private final Statement callSite;
 		private Query byPassingQuery;
@@ -958,18 +959,7 @@ public abstract class WeightedBoomerang<W extends Weight> implements MethodReach
 							new Node<Statement, Val>(returnSite, byPassing));
 					queryToSolvers.get(byPassingQuery).getFieldAutomaton().registerListener(
 							new ImportToSolver(new SingleNode<>(new Node<Statement, Val>(returnSite, byPassing)), byPassingQuery, flowQuery));
-					queryToSolvers.get(flowQuery).registerStatementFieldTransitionListener(new StatementBasedFieldTransitionListener<W>(returnSite) {
-						@Override
-						public void onAddedTransition(Transition<Field, INode<Node<Statement, Val>>> t) {
-							if (!(t.getStart() instanceof GeneratedState)) {
-								Val alias = t.getStart().fact().fact();
-								queryToSolvers.get(flowQuery).addNormalCallFlow(new Node<Statement, Val>(returnSite,alias),
-									new Node<Statement, Val>(returnSite, byPassing));
-								System.out.println("ALIAS FLOW" + new Node<Statement, Val>(returnSite,alias) +"  "+
-										new Node<Statement, Val>(returnSite, byPassing));
-							}
-						}
-					});
+					queryToSolvers.get(flowQuery).registerStatementFieldTransitionListener(new InjectIndirectNormalFlow<W>(returnSite, byPassing));
 				}
 			}
 		}
@@ -1018,6 +1008,48 @@ public abstract class WeightedBoomerang<W extends Weight> implements MethodReach
 			return WeightedBoomerang.this;
 		}
 
+		private class InjectIndirectNormalFlow<W extends Weight> extends StatementBasedFieldTransitionListener<W> {
+			private final Statement returnSite;
+			private final Val byPassing;
+
+			public InjectIndirectNormalFlow(Statement returnSite, Val byPassing) {
+				super(returnSite);
+				this.returnSite = returnSite;
+				this.byPassing = byPassing;
+			}
+
+			@Override
+            public void onAddedTransition(Transition<Field, INode<Node<Statement, Val>>> t) {
+                if (!(t.getStart() instanceof GeneratedState)) {
+                    Val alias = t.getStart().fact().fact();
+//                    System.out.println("CallSite: " +callSite + byPassing);
+                    queryToSolvers.get(flowQuery).addNormalCallFlow(new Node<Statement, Val>(returnSite,alias),
+                        new Node<Statement, Val>(returnSite, byPassing));
+//                    System.out.println("ALIAS FLOW" + new Node<Statement, Val>(returnSite,alias) +"  "+
+//                            new Node<Statement, Val>(returnSite, byPassing));
+                }
+            }
+
+			@Override
+			public boolean equals(Object o) {
+				if (this == o) return true;
+				if (o == null || getClass() != o.getClass()) return false;
+				if (!super.equals(o)) return false;
+
+				InjectIndirectNormalFlow<?> that = (InjectIndirectNormalFlow<?>) o;
+
+				if (returnSite != null ? !returnSite.equals(that.returnSite) : that.returnSite != null) return false;
+				return byPassing != null ? byPassing.equals(that.byPassing) : that.byPassing == null;
+			}
+
+			@Override
+			public int hashCode() {
+				int result = super.hashCode();
+				result = 31 * result + (returnSite != null ? returnSite.hashCode() : 0);
+				result = 31 * result + (byPassing != null ? byPassing.hashCode() : 0);
+				return result;
+			}
+		}
 	}
 
 	public class FieldReadPOI extends FieldStmtPOI {
@@ -1144,8 +1176,9 @@ public abstract class WeightedBoomerang<W extends Weight> implements MethodReach
 		@Override
 		public void onOutTransitionAdded(Transition<Field, INode<Node<Statement, Val>>> t, W w,
 				WeightedPAutomaton<Field, INode<Node<Statement, Val>>, W> aut) {
+
 			insertTransition(queryToSolvers.get(flowSolver).getFieldAutomaton(), t);
-			if(!t.getTarget().fact().equals(flowSolver.asNode())){
+			if(!t.getLabel().equals(Field.empty())) {
 				queryToSolvers.get(baseSolver).getFieldAutomaton().registerListener(new ImportToSolver(t.getTarget(), baseSolver, flowSolver));
 			}
 		}
@@ -1159,6 +1192,7 @@ public abstract class WeightedBoomerang<W extends Weight> implements MethodReach
 			return WeightedBoomerang.this;
 		}
 	}
+
 
 	private boolean addAllocationType(RefType type) {
 		if (allocatedTypes.add(type)) {
