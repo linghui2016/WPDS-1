@@ -98,6 +98,15 @@ public abstract class ForwardBoomerangSolver<W extends Weight> extends AbstractB
 						return false;
 					}
 				}
+
+				if (as.containsInvokeExpr()) {
+					InvokeExpr ie = as.getInvokeExpr();
+					for(Value v : ie.getArgs()){
+						if(v.equals(value.value())){
+							return false;
+						}
+					}
+				}
 				return true;
 			}
 			if(as.getLeftOp() instanceof StaticFieldRef){
