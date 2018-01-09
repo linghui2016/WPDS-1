@@ -35,14 +35,26 @@ public abstract class EmptyCalleeFlow {
 	}
 	
 
+	private boolean isStringBuilderCall(Stmt callSite) {
+		return callSite.getInvokeExpr().getMethod().getDeclaringClass().equals(Scene.v().getSootClass("java.lang.StringBuilder"));
+	}
+
 	public Collection<? extends State> getEmptyCalleeFlow(SootMethod caller, Stmt callSite, Val value,
 			Stmt returnSite) {
 		if(isSystemArrayCopy(callSite.getInvokeExpr().getMethod())){
 			return systemArrayCopyFlow(caller, callSite, value, returnSite);
 		}
+		//TODO Introduce format mapping respective calls or correctly handle System.arraycopy(?)
+		if(isStringBuilderCall(callSite)){
+			return stringBuilderFlow(caller, callSite, value, returnSite);
+		}
 		return Collections.emptySet();
 	}
 
+
+	protected abstract Collection<? extends State> stringBuilderFlow(SootMethod caller, Stmt callSite, Val value,
+			Stmt returnSite);
+	
 	protected abstract Collection<? extends State> systemArrayCopyFlow(SootMethod caller, Stmt callSite, Val value,
 			Stmt returnSite);
 }

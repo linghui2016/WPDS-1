@@ -19,4 +19,19 @@ public class StringTest extends AbstractBoomerangTest {
 		char[] s = "password".toCharArray();
 		queryFor(s);
 	}
+	
+
+	@Test
+	public void stringBuilderTest(){
+		StringBuilder b = new StringBuilder("Test");
+		b.append("ABC");
+		String s = b.toString();
+		queryFor(s);
+	}
+	@Test
+	public void stringBuilder1Test(){
+		StringBuilder b = new StringBuilder("Test");
+		String s = b.toString();
+		queryFor(s);
+	}
 }

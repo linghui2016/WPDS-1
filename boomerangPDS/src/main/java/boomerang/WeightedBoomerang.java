@@ -678,8 +678,26 @@ public abstract class WeightedBoomerang<W extends Weight> implements MethodReach
 		AbstractBoomerangSolver<W> solver = queryToSolvers.getOrCreate(query);
 		if (unit.isPresent()) {
 			for (Unit succ : new BackwardsInterproceduralCFG(icfg()).getSuccsOf(unit.get())) {
-				solver.solve(new Node<Statement, Val>(new Statement((Stmt) succ, icfg().getMethodOf(succ)),
-						query.asNode().fact()));
+				Node<Statement, Val> source = new Node<Statement, Val>(new Statement((Stmt) succ, icfg().getMethodOf(succ)),
+						query.asNode().fact());
+				if(isStringAllocation(query.asNode())){
+//					Scene.v().forceResolve("java.lang.String", SootClass.BODIES);
+					
+					SootClass stringClass = Scene.v().getSootClass("java.lang.String");
+					if(stringClass.declaresField("char[] value")){
+						SootField valueField = stringClass.getField("char[] value");
+						SingleNode<Node<Statement, Val>> s = new SingleNode<Node<Statement, Val>>(source);
+						INode<Node<Statement, Val>> irState = solver.getFieldAutomaton().createState(s, new Field(valueField));
+						insertTransition(solver.getFieldAutomaton(),
+								new Transition<Field, INode<Node<Statement, Val>>>(
+										new SingleNode<Node<Statement, Val>>(source), new Field(valueField),irState
+										));
+						insertTransition(solver.getFieldAutomaton(),
+								new Transition<Field, INode<Node<Statement, Val>>>(irState, Field.empty(),
+										solver.getFieldAutomaton().getInitialState()));
+					}
+				}
+				solver.solve(source);
 			}
 		}
 	}
@@ -702,7 +720,7 @@ public abstract class WeightedBoomerang<W extends Weight> implements MethodReach
 									new SingleNode<Node<Statement, Val>>(source), Field.array(),
 									new SingleNode<Node<Statement, Val>>(source)));
 				}
-				if(isStringAllocation(unit.get())){
+				if(isStringAllocation(query.asNode())){
 //					Scene.v().forceResolve("java.lang.String", SootClass.BODIES);
 					SootClass stringClass = Scene.v().getSootClass("java.lang.String");
 					if(stringClass.declaresField("char[] value")){
@@ -728,8 +746,12 @@ public abstract class WeightedBoomerang<W extends Weight> implements MethodReach
 		}
 	}
 
-	private boolean isStringAllocation(Stmt stmt) {
-		if(stmt instanceof AssignStmt && ((AssignStmt) stmt).getRightOp() instanceof StringConstant){
+	private boolean isStringAllocation(Node<Statement,Val> query) {
+		Stmt s = query.stmt().getUnit().get();
+		if(s instanceof AssignStmt && ((AssignStmt) s).getRightOp() instanceof StringConstant){
+			return true;
+		}
+		if(query.fact().value().getType().equals(Scene.v().getSootClass("java.lang.String").getType())){
 			return true;
 		}
 		return false;

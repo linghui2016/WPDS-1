@@ -575,10 +575,8 @@ public abstract class SyncPDSSolver<Stmt extends Location, Fact, Field extends L
 		if (system.equals(PDSSystem.FIELDS)) {
 			
 			if(FieldSensitive){
-				if(!fieldContextReachable.contains(succ)){
-					addFieldRule(new PushRule<Field, INode<Node<Stmt,Fact>>, W>(asFieldFact(curr),
-							fieldWildCard(), asFieldFact(succ),  (Field) location,fieldWildCard(), getFieldWeights().push(curr,succ,(Field)location)));
-				}
+				addFieldRule(new PushRule<Field, INode<Node<Stmt,Fact>>, W>(asFieldFact(curr),
+						fieldWildCard(), asFieldFact(succ),  (Field) location,fieldWildCard(), getFieldWeights().push(curr,succ,(Field)location)));
 			} else{
 				addNormalFieldFlow(curr, succ);
 			}

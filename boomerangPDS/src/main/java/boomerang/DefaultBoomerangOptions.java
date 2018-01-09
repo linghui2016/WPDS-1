@@ -57,10 +57,10 @@ public class DefaultBoomerangOptions implements BoomerangOptions {
 	protected boolean isArrayAllocationVal(Value val) {
 		if(val instanceof NewArrayExpr){
 			NewArrayExpr expr = (NewArrayExpr) val;
-			return expr.getBaseType() instanceof RefType;
+			return true;//;expr.getBaseType() instanceof RefType;
 		} else if(val instanceof NewMultiArrayExpr){
 			NewMultiArrayExpr expr = (NewMultiArrayExpr) val;
-			return expr.getBaseType().getArrayElementType() instanceof RefType;
+			return true;//expr.getBaseType().getArrayElementType() instanceof RefType;
 		}
 		return false;
 	}
@@ -72,7 +72,7 @@ public class DefaultBoomerangOptions implements BoomerangOptions {
 
 	@Override
 	public boolean arrayFlows() {
-		return false;
+		return true;
 	}
 
 	@Override
@@ -110,7 +110,7 @@ public class DefaultBoomerangOptions implements BoomerangOptions {
 	}
 
 	public boolean trackStrings(){
-		return false;
+		return true;
 	}
 	
 	
