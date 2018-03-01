@@ -714,6 +714,20 @@ public abstract class WeightedBoomerang<W extends Weight> {
 		if(analysisWatch.isRunning()){
 			analysisWatch.stop();
 		}
+		boolean changed = true;
+		while(changed) {
+			changed = false;
+			for(Entry<Query, AbstractBoomerangSolver<W>> s : Lists.newArrayList(queryToSolvers.entrySet())) {
+				s.getValue().getCallAutomaton().solve();
+				s.getValue().getFieldAutomaton().solve();
+			}
+
+			for(Entry<Query, AbstractBoomerangSolver<W>> s : Lists.newArrayList(queryToSolvers.entrySet())) {
+				changed |= !s.getValue().getCallAutomaton().isSolved();
+				changed |= !s.getValue().getFieldAutomaton().isSolved();
+			}
+		}
+		
 	}
 
 	protected void backwardSolve(BackwardQuery query) {
@@ -725,6 +739,9 @@ public abstract class WeightedBoomerang<W extends Weight> {
 						query.asNode().fact()));
 			}
 		}
+
+		solver.getFieldAutomaton().solve();
+		solver.getCallAutomaton().solve();
 	}
 
 	private AbstractBoomerangSolver<W> forwardSolve(ForwardQuery query) {
@@ -769,6 +786,8 @@ public abstract class WeightedBoomerang<W extends Weight> {
 				}
 			}
 		}
+		solver.getFieldAutomaton().solve();
+		solver.getCallAutomaton().solve();
 		return solver;
 	}
 

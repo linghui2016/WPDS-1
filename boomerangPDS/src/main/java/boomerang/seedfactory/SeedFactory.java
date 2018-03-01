@@ -98,7 +98,7 @@ public abstract class SeedFactory<W extends Weight> {
         		}
         	}
         }
-        
+        automaton.solve();
         return seedToTransition.keySet();
     }
 
